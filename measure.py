@@ -1,10 +1,10 @@
 """
 For eash measurment we have a pair of points.
 
-There is a function for each hand pose (opened or closed) that returns a dict of name of measeures
+There is a function for each hand pose (opened or closed) that returns a dict of measeure names
 to their corresponting pairs of points.
 
-There's another function that takes the pairs of points and returns a dict of name of measeures
+There's another function that takes the pairs of points and returns a dict of measeure names
 to their corresponting distances, scaled by pixel size.
 
 Negative signs in point coordinates mean that the measurement is invalid.
@@ -21,8 +21,8 @@ def mean_sign(x, y):
     return sign * np.mean([abs(x), abs(y)], axis=0)
 
 
-def mesure_opened(points: np.ndarray):
-    """Return a dict of name of measeures to their corresponting pairs of points."""
+def mesure_opened(points: np.ndarray) -> dict[str, tuple]:
+    """Return a dict of measure names to their (start, end) points."""
     points = {name: np.asarray(point) for name, point in zip(points_interest_opened, points)}
 
     distance = {'handThumbBreadth':        (points['O_f1DistalR'], points['O_f1DistalL']),
@@ -55,8 +55,8 @@ def mesure_opened(points: np.ndarray):
     return distance
 
 
-def mesure_closed(points: np.ndarray):
-    """Return a dict of name of measeures to their corresponting pairs of points."""
+def mesure_closed(points: np.ndarray) -> dict[str, tuple]:
+    """Return a dict of measure names to their (start, end) points."""
     points = {name: np.asarray(point).astype(float, copy=False) for name, point in zip(points_interest_closed, points)}
 
     distance = {'handLength':          (points['C_f3Tip'],   points['C_wristBaseC']),

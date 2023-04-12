@@ -13,7 +13,7 @@ from constants import *
 
 
 def get_landmarks(image_rgb: np.ndarray, closed: bool, detector=Hands(static_image_mode=True, max_num_hands=1)):
-    """Get the pixel coordinates of the landmarks of the hand in the image."""
+    """Get the pixel coordinates of the hand landmarks in the image."""
     results = detector.process(image_rgb)
 
     if results is None or results.multi_hand_landmarks is None:
@@ -133,7 +133,7 @@ def get_landmarks_closed(image, lmk_mp: np.ndarray):
 
 def get_line_edge(image, point1: np.ndarray, point2=None, direction=None, direction_scale=1/3):
     """
-    Get the location of the edge of the hand in the continuation of the line between the first and second point or
+    Get the location of the hand edge in the continuation of the line between the first and second point or
     from the first point in the direction of the direction vector.
     """
     # Make sure the point is inside the image.
@@ -169,7 +169,7 @@ def get_line_edge(image, point1: np.ndarray, point2=None, direction=None, direct
     indices = indices[np.argsort(change_rate[indices])]
     # indices = [indices[0]] + [index for i, index in enumerate(indices[1:], start=1) if max(abs(indices[:i] - index)) > 4]  # Exclude the changes that are too close to each other.
 
-    # Exclude the changes that get more similar to the color of the start of the line.
+    # Exclude the changes that get more similar to the color of the line start.
     def before(index): return max(0, index - kernel_offset)
     def after(index): return min(len(line), index + kernel_offset)
     indices = ([index for index in indices

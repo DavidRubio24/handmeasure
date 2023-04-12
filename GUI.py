@@ -1,7 +1,7 @@
 """
 This class has all the imformation and functions to create the GUI:
 - The original image and .
-- The points locations.
+- The point locations.
 - The modified image with the points and the measure linesd drawn.
 - The zoom level, i.e. the region where to crop the image.
 - The window title.
@@ -26,7 +26,7 @@ COLOR_SCHEME_MEASURES = {'handBreadthMeta_C_m1_3-C_m1_2': [221, 229, 205], 'hand
 class CorrectorGUI:
     def __init__(self, image_path: str, points: np.ndarray):
         self.image_edges = None
-        """Image with the detected edges. Use to find the edges of the hand, where the landmarks should be."""
+        """Image with the detected edges. Used to find the edges of the hand, where the landmarks should be."""
         self.points_original = np.array(points, copy=False)
         """Original points, before any modification. Used to reset the points."""
         self.points = np.array(points, dtype=float, copy=True)
@@ -63,9 +63,9 @@ class CorrectorGUI:
             # Ignore out of bounds points.
             if y >= self.modified_image.shape[0] or x >= self.modified_image.shape[1]:
                 continue
-            # If the point is negative it doesn't count: paint it black.
-            # If the point has decimals it was estimated by the model: paint it white.
-            # If the points is an integer it was measured by the user: paint it red.
+            # If the point is negative, it doesn't count: paint it black.
+            # If the point has decimals, it was estimated by the model: paint it white.
+            # If the point is an integer, it was measured by the user: paint it red.
             if x < 0:
                 circle_color = (0, 0, 0)
                 x *= -1
@@ -74,18 +74,20 @@ class CorrectorGUI:
                 circle_color = (255, 255, 255)
             else:
                 circle_color = (0, 0, 255)
+            # Draw a cross at the point surrounded by a circle.
             x, y = round(x), round(y)
             self.modified_image[y - radius:y + radius + 1, x:x+1] = color
             self.modified_image[y:y+1, x - radius:x + radius + 1] = color
             cv2.circle(self.modified_image, (x, y), radius, circle_color, 2)
 
-        measures = {}
+        measures: dict[str, tuple] = {}
+        """Dict of measure names to (start, end) points."""
         if len(self.points) == 15:
             measures = mesure_closed(self.points)
         elif len(self.points) == 23:
             measures = mesure_opened(self.points)
 
-        # Draw measures
+        # Draw measures.
         for name, ((x0, y0), (x1, y1)) in measures.items():
             cv2.line(self.modified_image, (round(abs(x0)), round(abs(y0))), (round(abs(x1)), round(abs(y1))), COLOR_SCHEME_MEASURES[name], 2)
 
@@ -98,7 +100,7 @@ class CorrectorGUI:
             sticky_edges = flags & cv2.EVENT_FLAG_SHIFTKEY
             self.points[self.moving_point, :2] = self.closest_edge(x + self.crop[1], y + self.crop[0], sticky_edges)
             self.show_image()
-        elif event == cv2.EVENT_MOUSEMOVE and self.moving_point is not None:
+        elif self.moving_point is not None and event == cv2.EVENT_MOUSEMOVE:
             sticky_edges = flags & cv2.EVENT_FLAG_SHIFTKEY
             self.points[self.moving_point, :2] = self.closest_edge(x + self.crop[1], y + self.crop[0], sticky_edges)
             self.show_image()
@@ -134,7 +136,7 @@ class CorrectorGUI:
 
     def closest_point(self, x, y):
         """Returns the index of the closest keypoint to the given coordinates."""
-        distances = np.sqrt((self.points[..., 0] - x) ** 2 + (self.points[..., 1] - y) ** 2)
+        distances = (self.points[..., 0] - x) ** 2 + (self.points[..., 1] - y) ** 2
         return np.argmin(distances)
 
     def event_loop(self):
@@ -152,7 +154,7 @@ class CorrectorGUI:
                 self.points = self.points_original.copy()
                 self.shift = 0
                 update_image = True
-            elif k == 8:  # Return
+            elif k == 8:  # Backspace
                 # End correction without saving anything.
                 return None
             elif k in [32, 13, ord('g')]:  # Space, enter or 'g'

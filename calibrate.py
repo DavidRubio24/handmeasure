@@ -61,6 +61,7 @@ def calibrate_folder(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALI
             os.rename(os.path.join(path, file), os.path.join(used_path, file))
     print('Done with calibration.')
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('path', nargs='?', default=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR/',

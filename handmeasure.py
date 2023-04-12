@@ -3,7 +3,7 @@ Process each PNG image in the given folder and generates a JSON file with the la
 
 PNGs must have either 'close' or 'M1' in their name to be considered closed
 and 'open' or 'M2' in their name to be considered opened.
-If not they will be ignored.
+If not, they will be ignored.
 
 Each type of hand (closed or opened) has a different set of landmarks and distances.
 
@@ -50,7 +50,8 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
 
         points_interest = points_interest_closed if closed else points_interest_opened
 
-        # Get the landmarks from the correspopnding JSON file if exists or generate them automatically if not.
+        # Get the landmarks from the corresponding JSON fil
+        # if exists or generate them automatically if not.
         basename, extension = os.path.splitext(file)
         json = basename + '.json'
         if os.path.exists(json):
