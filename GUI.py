@@ -24,7 +24,7 @@ COLOR_SCHEME_MEASURES = {'handBreadthMeta_C_m1_3-C_m1_2': [221, 229, 205], 'hand
 
 
 class CorrectorGUI:
-    def __init__(self, image_path: str, points: np.ndarray):
+    def __init__(self, image_path: str, points: np.ndarray, image_path_dst: str):
         self.image_edges = None
         """Image with the detected edges. Used to find the edges of the hand, where the landmarks should be."""
         self.points_original = np.array(points, copy=False)
@@ -37,7 +37,7 @@ class CorrectorGUI:
                      round(self.points[:, 0].max()) + 300)
         """Crop to be applied to the image. It's a tuple of (y1, x1, y2, x2)."""
 
-        self.image_path = image_path
+        self.image_path_dst = image_path_dst
         """Path to the image to be corrected. Used to save a JPG showing the corrected points."""
         self.image = cv2.imread(image_path)
         """Original image. It's not modified."""
@@ -159,7 +159,7 @@ class CorrectorGUI:
                 return None
             elif k in [32, 13, ord('g')]:  # Space, enter or 'g'
                 # Save the points and end correction.
-                cv2.imwrite(self.image_path[:-4] + '.measures.jpg', self.modified_image)
+                cv2.imwrite(self.image_path_dst[:-4] + '.measures.jpg', self.modified_image)
                 return self.points if np.any(self.points != self.points_original) else None
             elif k == ord('-'):
                 # Zoom out.

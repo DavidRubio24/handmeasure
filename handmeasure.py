@@ -32,11 +32,13 @@ from measure import compute_distances, mesure_closed, mesure_opened
 INPUT_FILE_FORMATS = ('.png', )
 
 
-def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=False):
+def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=False,
+         save_path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS\REVISADAS/'):
     for file in os.listdir(path):
         if not file.endswith(INPUT_FILE_FORMATS):
             continue
 
+        file_dst = os.path.join(save_path, file)
         file = os.path.join(path, file)
 
         # Find out if the file is closed or opened.
@@ -50,9 +52,9 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
 
         points_interest = points_interest_closed if closed else points_interest_opened
 
-        # Get the landmarks from the corresponding JSON fil
+        # Get the landmarks from the corresponding JSON file
         # if exists or generate them automatically if not.
-        basename, extension = os.path.splitext(file)
+        basename, extension = os.path.splitext(file_dst)
         json = basename + '.json'
         if os.path.exists(json):
             print(f'Cargando puntos de {json}...')
@@ -73,7 +75,7 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
 
         if not auto:
             print(f'Corrige landmarks de {file}...')
-            corrector_gui = CorrectorGUI(file, landmarks)
+            corrector_gui = CorrectorGUI(file, landmarks, file_dst)
             landmarks_updated = corrector_gui.event_loop()
             cv2.destroyWindow(corrector_gui.title)
             if landmarks_updated is not None:
@@ -93,6 +95,7 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
                                 .replace("': [", "':\t[")
                                 .replace("'", '"')
                                 )
+            os.rename(file, file_dst)
         else:
             print(f'No se han actualizado los landmarks de {file}.')
 
@@ -108,6 +111,8 @@ def parse_args():
     )
     parser.add_argument('path', nargs='?', default=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
                         help='Path to the folder containing the PNG images to be processed.')
+    parser.add_argument('save_path', nargs='?', default=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS\REVISADAS/',
+                        help='Path to the folder to save move everything after finishing each image.')
     parser.add_argument('--auto', action='store_true', default=False,
                         help='Generate the JSONs with the landmarks without human corrections. (Default: False)')
     return parser.parse_args()
