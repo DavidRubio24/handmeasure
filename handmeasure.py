@@ -70,7 +70,7 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
                 continue
             image_rgb = image[..., ::-1]
             from landmarks import get_landmarks
-            landmarks = get_landmarks(image_rgb, closed)
+            landmarks = get_landmarks(image_rgb, closed) + .001
             updated_landmarks = True
 
         if not auto:
