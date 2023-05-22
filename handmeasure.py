@@ -27,7 +27,7 @@ from constants import points_interest_closed, points_interest_opened
 from GUI import CorrectorGUI
 from measure import compute_distances, mesure_closed, mesure_opened
 # There's a conditional import: from landmarks import get_landmarks
-# It imports mediapipe which takea a lot of time to load. So it's imported only when needed.
+# It imports mediapipe which takes a lot of time to load. So it's imported only when needed.
 
 INPUT_FILE_FORMATS = ('.png', )
 
@@ -95,7 +95,12 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
                                 .replace("': [", "':\t[")
                                 .replace("'", '"')
                                 )
-            os.rename(file, file_dst)
+            if os.path.exists(file_dst):
+                response = input(f'¿Sobreescribir {file_dst} con {file}? ([s]/n) ')
+                if response.strip().lower() not in ('n', 'no', 'not', 'non', 'na', 'nah', 'nay', 'nein'):
+                    os.replace(file, file_dst)
+                else:
+                    print(f'No se ha movido {file} a {file_dst}.')
         else:
             print(f'No se han actualizado los landmarks de {file}.')
 
