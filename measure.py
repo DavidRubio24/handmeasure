@@ -93,7 +93,7 @@ def mesure_closed(points: np.ndarray) -> dict[str, tuple]:
     return distance
 
 
-def compute_distances(points: dict, factor: float = 138/1711.1):
+def compute_distances(points: dict, pixel_size: float = 138 / 1711.1):
     """
     Given a dictionary of names to pairs of points, compute the distance between the pairs of points.
 
@@ -101,6 +101,6 @@ def compute_distances(points: dict, factor: float = 138/1711.1):
 
     Scale the distance by the given factor (to account for pixel size).
     """
-    distances = {name: np.linalg.norm(abs(p1) - abs(p0)) * factor * (1 if np.all(p0 >= 0) and np.all(p1 >= 0) else -1)
+    distances = {name: np.linalg.norm(abs(p1) - abs(p0)) * pixel_size * (1 if np.all(p0 >= 0) and np.all(p1 >= 0) else -1)
                  for name, (p0, p1) in points.items()}
     return distances

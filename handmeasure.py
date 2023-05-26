@@ -32,8 +32,11 @@ from measure import compute_distances, mesure_closed, mesure_opened
 INPUT_FILE_FORMATS = ('.png', )
 
 
-def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=False,
-         save_path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS\REVISADAS/'):
+def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
+         save_path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS\REVISADAS/',
+         auto=False,
+         pixel_size=1/12.36,
+         ):
     for file in os.listdir(path):
         if not file.endswith(INPUT_FILE_FORMATS):
             continue
@@ -85,7 +88,9 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/', auto=F
         if updated_landmarks:
             print(f'Guardando landmarks de {file} actualizados.')
             json_content = {point: landmarks[i].tolist() for i, point in enumerate(points_interest)}
-            json_content |= compute_distances(mesure_closed(landmarks) if closed else mesure_opened(landmarks))
+            json_content['pixel_size'] = pixel_size
+            pixel_positions = mesure_closed(landmarks) if closed else mesure_opened(landmarks)
+            json_content |= compute_distances(pixel_positions, pixel_size)
             with open(json, 'w') as json_file:
                 json_file.write(str(json_content)
                                 # Reformat the dict into a JSON.
