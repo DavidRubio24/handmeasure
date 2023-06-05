@@ -55,8 +55,8 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
 
         points_interest = points_interest_closed if closed else points_interest_opened
 
-        # Get the landmarks from the corresponding JSON file
-        # if exists or generate them automatically if not.
+        # Get the landmarks from the corresponding JSON file if exists
+        # or generate them automatically if not.
         basename, extension = os.path.splitext(file_dst)
         json = basename + '.json'
         if os.path.exists(json):
@@ -106,6 +106,8 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
                     os.replace(file, file_dst)
                 else:
                     print(f'No se ha movido {file} a {file_dst}.')
+            elif not auto:
+                os.rename(file, file_dst)
         else:
             print(f'No se han actualizado los landmarks de {file}.')
 
