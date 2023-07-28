@@ -1,3 +1,6 @@
+Author: davidrubio.24@gmail.com
+(Don't hesitate on contacting me).
+
 # Handmesure
 
 Utilities to locate points of interest in images of scanned hands to mesure the hand.
@@ -16,7 +19,14 @@ The calibrate.py script is independent and is here for convinience.
 
 ### Install
 
-It needs conda (https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe).
+To install it without the option to zoom by scrolling, just install python and run:
+
+```python -m pip install numpy opencv-python mediapipe```
+
+This may be enough for trying if it works correctly.
+But for actual use, it's better to install it in a conda environment.
+
+The full installation requieres conda (https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe).
 
 From the Anaconda prompt, create a new environment with the numpy and opencv libraries:
 
