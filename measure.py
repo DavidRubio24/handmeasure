@@ -76,6 +76,8 @@ def mesure_closed(points: np.ndarray) -> dict[str, tuple]:
                 }
     
     # The other two distances are computed from the keypoints.
+    # The most intuitive way of understanding how this works is by checking the landmarks of a hand
+    # and seeing how the distances change when moving the points.
 
     # handLengthCrotch parallel to middle finger, starting in C_f1Defect, up until C_f3Tip's hight.
     direction = abs(points['C_f3Tip']) - abs(points['C_f3BaseC'])

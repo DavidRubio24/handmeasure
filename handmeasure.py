@@ -81,7 +81,7 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
                 continue
             image_rgb = image[..., ::-1]
             from landmarks import get_landmarks  # The First time takes a while to load MediaPipe.
-            landmarks = get_landmarks(image_rgb, closed)
+            landmarks = get_landmarks(image_rgb, closed).astype(np.float32)
             
             if landmarks is None:
                 print(f'No se ha podido detectar la mano en {file}.')
