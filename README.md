@@ -104,5 +104,5 @@ We currently assume that that can't happen.
 After the user saves each image, two files will be saved along the image,
 both with the same name but different extensions:
 
-* .JSON with the keypoints, the measurements between them, and the capture date. Its contents are a valid python dict.
+* .JSON with the keypoints, the measurements between them, the pixel size and the capture date. Its contents are a valid python dict.
 * .JPG with the keypoints and the measurements between them painted on the image.

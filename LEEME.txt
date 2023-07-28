@@ -3,12 +3,15 @@ conda activate p10
 D:
 cd handmeasure
 python -c "import calibrate; calibrate.calibrate_folder(r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR', r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS', r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR\Filtradas')"
-python -c "import handmeasure; handmeasure.main(r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS', auto=True)"
 
 # ACTUALIZA SOFTWARE
 D:
 cd handmeasure
 git pull
+
+# Si da algún error porque se ha modificado algún archivo en local primero hay que hacer
+git stash
+
 
 # REVISA
 conda activate p10

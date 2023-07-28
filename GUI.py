@@ -35,7 +35,7 @@ class CorrectorGUI:
                      max(0, round(self.points[:, 0].min()) - 300),
                      round(self.points[:, 1].max()) + 100,
                      round(self.points[:, 0].max()) + 300)
-        """Crop to be applied to the image. It's a tuple of (y1, x1, y2, x2)."""
+        """Crop to be applied to the image. It's a tuple of (y0, x0, y1, x1)."""
 
         self.image_path_dst = image_path_dst
         """Path to the image to be corrected. Used to save a JPG showing the corrected points."""
@@ -51,12 +51,13 @@ class CorrectorGUI:
         """Index of the last point moved by the user with the mouse."""
         self.shift = 0
         """Positive if the user has pressed the shift key."""
+        
         cv2.namedWindow(self.title, cv2.WINDOW_GUI_NORMAL)
         cv2.setMouseCallback(self.title, self.on_mouse)
 
     def show_image(self):
         """Draws the points and measures and shows the image."""
-        self.modified_image[:] = self.image
+        self.modified_image[:] = self.image  # Copy.
         radius = 10
         # Draw points
         for (x, y), color in zip(self.points, COLOR_SCHEME_POINTS):
@@ -76,12 +77,15 @@ class CorrectorGUI:
                 circle_color = (0, 0, 255)
             # Draw a cross at the point surrounded by a circle.
             x, y = round(x), round(y)
-            self.modified_image[y - radius:y + radius + 1, x:x+1] = color
-            self.modified_image[y:y+1, x - radius:x + radius + 1] = color
+            self.modified_image[max(0, y - radius):y + radius + 1, x:x+1] = color
+            self.modified_image[y:y+1, max(0, x - radius):x + radius + 1] = color
             cv2.circle(self.modified_image, (x, y), radius, circle_color, 2)
 
         measures: dict[str, tuple] = {}
         """Dict of measure names to (start, end) points."""
+        
+        # We check the number of points to know if the hand is closed or opened.
+        # This feels wrong. If something changes, it will break.
         if len(self.points) == 15:
             measures = mesure_closed(self.points)
         elif len(self.points) == 23:
@@ -97,10 +101,12 @@ class CorrectorGUI:
         if event == cv2.EVENT_RBUTTONDOWN:
             self.moving_point = self.closest_point(x + self.crop[1], y + self.crop[0])
             self.last_point = self.moving_point
+            # If the shift key is pressed, the point will stick to the closest edge.
             sticky_edges = flags & cv2.EVENT_FLAG_SHIFTKEY
             self.points[self.moving_point, :2] = self.closest_edge(x + self.crop[1], y + self.crop[0], sticky_edges)
             self.show_image()
         elif self.moving_point is not None and event == cv2.EVENT_MOUSEMOVE:
+            # If the shift key is pressed, the point will stick to the closest edge.
             sticky_edges = flags & cv2.EVENT_FLAG_SHIFTKEY
             self.points[self.moving_point, :2] = self.closest_edge(x + self.crop[1], y + self.crop[0], sticky_edges)
             self.show_image()
@@ -113,22 +119,29 @@ class CorrectorGUI:
         if not sticky_edges:
             return x, y
 
+        # Only compute the edges the first time they are needed.
         if self.image_edges is None:
             # Blur the red channel (the most representative for the hand) and detect its edges.
+            # TODO: Those parameters have been chosen empiricaly for our scanner.
+            #       For other images they may not work as well.
+            #       Delft probably needs a bigger blur (~20 instead of 11).
             image_blured = cv2.GaussianBlur(self.image[..., 2], (11, 11), 0)
             self.image_edges = cv2.Canny(image_blured, 1000, 1100, apertureSize=5)
 
+        # If the point is already on an edge (a non-null image_edges pixel), return it.
         if self.image_edges[y, x]:
             return x, y
 
         # Only look for edges in a small area around the point.
-        area = self.image_edges[y - radius:y + radius,
-                                x - radius:x + radius]
-
-        indices = np.argwhere(area)  # area indices start at (x, y) - (radius, radius)
-        if len(indices) == 0:
-            return x, y
         min_x, min_y = max(0, x - radius), max(0, y - radius)
+        area = self.image_edges[min_y:y + radius,
+                                min_x:x + radius]
+
+        indices = np.argwhere(area)  # area indices are coordinates and start at (x, y) - (radius, radius)
+        if len(indices) == 0:
+            # No edges in the area, return the current point.
+            return x, y
+        
         distances = np.linalg.norm(indices - (y - min_y, x - min_x), axis=1)
         closest_index = np.argmin(distances)
 
@@ -148,33 +161,39 @@ class CorrectorGUI:
                 update_image = False
             else:
                 cv2.imshow(self.title, self.modified_image[self.crop[0]:self.crop[2], self.crop[1]:self.crop[3]])
-            k = cv2.waitKey()
-            if k == 27:  # Esc
+            
+            # Wait for a key to be pressed.
+            key_pressed = cv2.waitKey()
+            
+            if key_pressed == 27:  # Esc
                 # Reset points to the original ones.
                 self.points = self.points_original.copy()
-                self.shift = 0
                 update_image = True
-            elif k == 8:  # Backspace
+            elif key_pressed == 8:  # Backspace
                 # End correction without saving anything.
                 return None
-            elif k in [32, 13, ord('g')]:  # Space, enter or 'g'
+            elif key_pressed in [32, 13, ord('g')]:  # Space, enter or 'g'
                 # Save the points and end correction.
                 cv2.imwrite(self.image_path_dst[:-4] + '.measures.jpg', self.modified_image)
                 return self.points if np.any(self.points != self.points_original) else None
-            elif k == ord('-'):
-                # Zoom out.
+            elif key_pressed == ord('-'):
+                # Zoom out. Add 10 pixels to each side.
                 x0, y0, x1, y1 = self.crop
                 crop = (max(x0 - 10, 0), max(y0 - 10, 0), min(x1 + 10, self.image.shape[0] - 1), min(y1 + 10, self.image.shape[1] - 1))
                 self.crop = tuple(map(round, crop))
-            elif k == ord('+'):
-                # Zoom in.
+            elif key_pressed == ord('+'):
+                # Zoom in. Remove 10 pixels from each side.
                 x0, y0, x1, y1 = self.crop
                 x0, y0, x1, y1 = (x0 + 10, y0 + 10, x1 - 10, y1 - 10)
                 crop = (min(x0, x1 - 11), min(y0, y1 - 11), max(x1, x0 + 11), max(y1, y0 + 11))
                 self.crop = tuple(map(round, crop))
-            elif k == 16:  # Shift
+            elif key_pressed == 16:  # Shift
                 self.shift = 2
-            elif k == 46 and self.shift > 0:  # (Shift +) Supr
+                # It will inmediately be reduced to 1.
+                # Any additional key pressed will reduce it to 0.
+                # So only if Supr is pressed immediately after, it will have any effect.
+            elif key_pressed == 46 and self.shift > 0:  # (Shift +) Supr
+                # Delete the last point moved. Negative points are considered invalid.
                 self.points[self.last_point] *= -1
                 update_image = True
             self.shift = max(0, self.shift - 1)

@@ -17,9 +17,11 @@ def get_landmarks(image_rgb: np.ndarray, closed: bool, detector=Hands(static_ima
     results = detector.process(image_rgb)
 
     if results is None or results.multi_hand_landmarks is None:
+        # No hand detected.
         return None
 
     landmarks = np.array([(l.x, l.y) for l in results.multi_hand_landmarks[0].landmark])
+    # Convert the normalized coordinates (from 0 to 1) to pixel coordinates (from 0 to image size).
     landmarks[:, 0] *= image_rgb.shape[1]
     landmarks[:, 1] *= image_rgb.shape[0]
 
@@ -33,11 +35,23 @@ def get_landmarks_opened(image, landmarks_mediapipe: np.ndarray):
     lmk = np.zeros((len(points_interest_opened), 2), int)
     """Our landmarks."""
 
+    # Names of our landmarks.
     O_f1Tip = 0; O_f1DistalR = 1; O_f1DistalL = 2
     O_f2Tip = 3; O_f2DistalR = 4; O_f2DistalL = 5; O_f2MedialR = 6; O_f2MedialL = 7
     O_f3Tip = 8; O_f3DistalR = 9; O_f3DistalL = 10; O_f3MedialR = 11; O_f3MedialL = 12
     O_f4Tip = 13; O_f4DistalR = 14; O_f4DistalL = 15; O_f4MedialR = 16; O_f4MedialL = 17
     O_f5Tip = 18; O_f5DistalR = 19; O_f5DistalL = 20; O_f5MedialR = 21; O_f5MedialL = 22
+    
+    """
+    The MediaPipe Hand landmarks are used as a starting point to compute ours.
+    
+    MediaPipe landmarks are located in the center of each finger articulation and the center of the finger print.
+    Our landmarks are located at the edge of the finger (the tip and the sides in each articulation).
+    
+    To compute our tip we take mediapipe tip and find a hand edge getting away from the previous articulation.
+    To compute the sides we take mediapipe articulation and find a hand edge getting away from that articulation,
+    in a perpendicular direction to the finger.
+    """
 
     # THUMB
     lmk[O_f1Tip] = get_line_edge(image, lmk_mp[THUMB_TIP], 2 * lmk_mp[THUMB_TIP] - lmk_mp[THUMB_IP])
@@ -98,6 +112,14 @@ def get_landmarks_closed(image, lmk_mp: np.ndarray):
     C_f5Tip = 4; C_f5BaseC = 9
     C_wristBaseC = 11; C_palmBaseC = 12
     C_m1_2 = 13; C_m1_3 = 14
+    
+    """
+    The MediaPipe Hand landmarks are used as a starting point to compute ours.
+    
+    We compute the tip just like in the opened hand: gettin away from MediaPipe's tip in the direction of the finger.
+    
+    The rest of our landmarks are computed as linear combinations of the MediaPipe landmarks.
+    """
 
     # THUMB
     lmk[C_f1Tip] = get_line_edge(image, lmk_mp[THUMB_TIP], 2 * lmk_mp[THUMB_TIP] - lmk_mp[THUMB_IP])
@@ -123,6 +145,7 @@ def get_landmarks_closed(image, lmk_mp: np.ndarray):
     lmk[C_wristBaseC] = lmk_mp[WRIST] * 1.1 - lmk_mp[MIDDLE_FINGER_MCP] * .1
     lmk[C_palmBaseC] = lmk_mp[WRIST]
 
+    # Move from the index and pinky MCPs away from the middle and ring MCPs respectively.
     lmk[C_m1_2] = get_line_edge(image, lmk_mp[INDEX_FINGER_MCP], direction_scale=1,
                                 direction=lmk_mp[INDEX_FINGER_MCP] - lmk_mp[MIDDLE_FINGER_MCP], )
     lmk[C_m1_3] = get_line_edge(image, lmk_mp[PINKY_MCP], direction_scale=1,
@@ -143,29 +166,30 @@ def get_line_edge(image, point1: np.ndarray, point2=None, direction=None, direct
         return point1
 
     # Get the second point from the direction if it is not given.
-    point2 = point2 if point2 is not None else point1 + np.array(direction) * direction_scale
+    if point2 is None:
+        point2 = point1 + np.array(direction) * direction_scale
 
     # Get the locations of the line that goes from the first to the second point.
     line_length = int(np.ceil(np.linalg.norm(point1 - point2)))
     line_locations = np.linspace(point1, point2, line_length, dtype=int)
 
-    # Crop the indices to the image.
+    # Crop the indices to the image (don't let the line get out of the image).
     line_locations = line_locations[(line_locations[:, 0] >= 0) & (line_locations[:, 0] < image.shape[1])]
     line_locations = line_locations[(line_locations[:, 1] >= 0) & (line_locations[:, 1] < image.shape[0])]
 
-    # Get the color of each pixel in the line.
+    # Get the color of each pixel in the line (get the pixel values in the locations of the line).
     line = np.array([image[y, x] for x, y in line_locations], dtype=int)
 
     # Compute the color changes along the line.
-    kernel = np.array([-2, -1, 0, 0, 1, 2])
-    kernel_offset = (kernel.shape[0] - 1) // 2
+    kernel = np.array([-2, -1, 0, 0, 1, 2])  # This is a 1D edge detection kernel.
+    kernel_offset = (kernel.shape[0] - 1) // 2  # The central position of the kernel.
     change_abs = [np.convolve(line[:, channel], kernel, 'valid') for channel in range(line.shape[1])]
     change_rate = np.linalg.norm(change_abs, axis=0)
 
-    # Find the N most significant color changes.
+    # Find the N most significant (biggest) color changes.
     N = 10
     indices = np.argpartition(change_rate, kth=len(change_rate) - N)[-N:]
-    # Order them by their change rate.
+    # Order the indices by their change rate.
     indices = indices[np.argsort(change_rate[indices])]
     # indices = [indices[0]] + [index for i, index in enumerate(indices[1:], start=1) if max(abs(indices[:i] - index)) > 4]  # Exclude the changes that are too close to each other.
 
@@ -174,7 +198,7 @@ def get_line_edge(image, point1: np.ndarray, point2=None, direction=None, direct
     def after(index): return min(len(line), index + kernel_offset)
     indices = ([index for index in indices
                 if np.linalg.norm(line[before(index)] - line[0])  # Similarity to the start of the line.
-                < np.linalg.norm(line[after(index)] - line[0]) + 5]  # Similarity to the end of the line with a margin.
+                < np.linalg.norm(line[after(index)] - line[0]) + 5]  # Similarity to the end of the line with a margin of 5.
                or indices)  # If all changes are excluded, use all of them anyway.
     edge = indices[-1]  # Keep the most significant change.
     edge_location = line_locations[edge + kernel_offset + 1]

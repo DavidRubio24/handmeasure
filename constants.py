@@ -1,4 +1,6 @@
 
+# Ordered names of the points of interest
+
 points_interest_closed = ['C_f1Tip', 'C_f2Tip', 'C_f3Tip', 'C_f4Tip', 'C_f5Tip', 'C_f1BaseC', 'C_f2BaseC', 'C_f3BaseC',
                           'C_f4BaseC', 'C_f5BaseC', 'C_f1Defect', 'C_wristBaseC', 'C_palmBaseC', 'C_m1_2', 'C_m1_3']
 

@@ -1,11 +1,12 @@
 """
-Thsi script is independent of the rest of the project.
+This script is independent of the rest of the project.
 It is used to calibrate the images from the camera.
 
 It is used to correct the perspective and eye fish distortions of the images.
 
 It uses a predifined intrinsic matrix and extrinsic parameters that
 have been empirically obtained by calibrating the camera with OpenCV.
+It can load another calibration from a JSON.
 """
 
 import os
@@ -50,13 +51,28 @@ class progress_bar:
 
 def calibrate_folder(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR/',
                      dest=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
-                     used_path=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR\Filtradas/'):
+                     used_path=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR\Filtradas/',
+                     calibration_json=None):
+    intrinsic_matrix = INTRINSIC_MATRIX
+    extrinsic_parameters = EXTRINSIC_PARAMETERS
+    if calibration_json is not None:
+        with open(calibration_json, 'r') as file:
+            # Load the calibration from the JSON file. It's a valid python dict.
+            # If SyntaxError: invalid syntax, it's probably because the file needs commas in the matrix. Add them manually.
+            calibration_dict = eval(file.read())
+        intrinsic_matrix = np.array(calibration_dict['camera_matrix'])
+        extrinsic_parameters = np.array(calibration_dict['distortion_coefficients'])
+    
     files = [f for f in os.listdir(path) if f.endswith('.png') and 'undistorted' not in f]
     print(f'Calibrating {len(files)} images from {path} to {dest} and moving original images to {used_path}.')
     for file in progress_bar(files):
-        undistorted = cv2.undistort(cv2.imread(os.path.join(path, file)), INTRINSIC_MATRIX, EXTRINSIC_PARAMETERS)
+        undistorted = cv2.undistort(cv2.imread(os.path.join(path, file)), intrinsic_matrix, extrinsic_parameters)
+        
+        # Save the undistorted image with a "lable" in the name.
         idx = file.find('.')
         cv2.imwrite(os.path.join(dest, file[:idx] + '.undistorted' + file[idx:]), undistorted)
+        
+        # If used_path is given, move the original image there.
         if used_path is not None and not os.path.exists(os.path.join(used_path, file)):
             os.rename(os.path.join(path, file), os.path.join(used_path, file))
     print('Done with calibration.')
@@ -70,6 +86,8 @@ def parse_args():
                         help='Destination path of the calibrated PNG images.')
     parser.add_argument('used_path', nargs='?', default=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALIBRAR\Filtradas/',
                         help='Path to move the original PNG images to.')
+    parser.add_argument('--calibration-json', '--calibration_json', default=None,
+                        help='Path to the JSON file containing the calibration matrix and distortion coefficients.')
     return parser.parse_args()
 
 
