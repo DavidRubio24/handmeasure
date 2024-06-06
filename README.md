@@ -3,7 +3,7 @@ Author: davidrubio.24@gmail.com
 
 # Handmesure
 
-Utilities to locate points of interest in images of scanned hands to mesure the hand.
+Utilities to locate points of interest in images of scanned hands to measure the hand.
 
 
 This project aims to detect points in two different poses: opened and closed.
@@ -14,7 +14,7 @@ As of right now (2023/4/12) the strategy is as follows:
 2. Use those keypoints and the edges of the hand as a reference to find the landmarks.
 3. Show a human the points, so she can modify them if they're wrong.
 
-The calibrate.py script is independent and is here for convinience. 
+The calibrate.py script is independent and is here for convenience.
 
 
 ### Install
@@ -26,13 +26,13 @@ To install it without the option to zoom by scrolling, just install python and r
 This may be enough for trying if it works correctly.
 But for actual use, it's better to install it in a conda environment.
 
-The full installation requieres conda (https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe).
+The full installation requires conda (https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe).
 
 From the Anaconda prompt, create a new environment with the numpy and opencv libraries:
 
 ```conda create -n p10 python=3.10 numpy opencv```
 
-Sometimes it's necessary to close and open the promt again.
+Sometimes it's necessary to close and open the prompt again.
 
 Activate the environment:
 
@@ -106,7 +106,7 @@ Pressing + and - zooms in and out. This is a hard zoom (it crops the image).
 
 Pressing Shift + Delete 'deletes' the last point that was moved.
 It doesn't actually delete it,
-but it paints it in black and stores its coordinates and related measurments in negative.
+but it paints it in black and stores its coordinates and related measurements in negative.
 This can cause problems if an actual keypoint is out of the image from the left or top
 and actually has negative coordinates.
 We currently assume that that can't happen.

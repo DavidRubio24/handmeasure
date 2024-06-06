@@ -7,13 +7,14 @@ If not, they will be ignored.
 
 Each type of hand (closed or opened) has a different set of landmarks and distances.
 
-The JSON file will be saved in the same folder as the PNG with the same name but with a .json extension.
+The JSON of each PNG will be saved with the same name but with a .json extension.
 The content of the JSON will be both a JSON valid file and a python dict.
 
 Usage:
-    python handmeasure.py <path> [--auto] [--pixel-size <pixel_size>]
+    python handmeasure.py <path> <save_path> [--auto] [--pixel-size <pixel_size>]
 
     <path> is the path to the folder containing the images.
+    <save_path> is the path to the folder where the JSONs and JPGs will be saved.
     --auto: if present, the program will process all the images in the folder without human correction.
     --pixel-size: the size of the pixels in mm. Default: 1/12.36 (the size of the pixels in our scanner).
 """
@@ -37,10 +38,11 @@ INPUT_FILE_FORMATS = ('.png', )
 def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
          save_path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS\REVISADAS/',
          auto=False,  # Don't ask for user input, just use the estimation based on MediaPipe.
-                      # Useful to genate the JSON files from one computer and checking them
+                      # Useful to generate the JSON files from one computer and checking them
                       # in another computer that can't run MediaPipe.
+                      # Also useful for not waiting to mediapipe when correcting labels.
          pixel_size=1/12.36,  # This value doesn't usually change unless the scanner is modified.
-                              # But we periodically check it, measuring the contour ruller in the scans (I used GIMP).
+                              # But we periodically check it, measuring the contour ruler in the scans (I used GIMP).
          ):
     for file in os.listdir(path):
         if not file.endswith(INPUT_FILE_FORMATS):
@@ -66,6 +68,8 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
         basename, extension = os.path.splitext(file_dst)
         json = basename + '.json'
         save_landmarks_in_json = False
+        """Whether to save the landmarks in the JSON file because the user modified them or they just got generated."""
+
         if os.path.exists(json):
             print(f'Cargando puntos de {json}...')
             with open(json, 'r') as json_file:
@@ -80,7 +84,7 @@ def main(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
                 print(f'No se puede leer {file}.')
                 continue
             image_rgb = image[..., ::-1]
-            from landmarks import get_landmarks  # The First time takes a while to load MediaPipe.
+            from landmarks import get_landmarks  # The first time takes a while to load MediaPipe.
             landmarks = get_landmarks(image_rgb, closed).astype(np.float32)
             
             if landmarks is None:
@@ -158,7 +162,7 @@ def parse_args():
     parser.add_argument('path', nargs='?', default=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS/',
                         help='Path to the folder containing the PNG images to be processed.')
     parser.add_argument('save_path', nargs='?', default=r'\\10.10.204.24\scan4d\TENDER\HANDS\02_HANDS_CALIBRADAS\REVISADAS/',
-                        help='Path to the folder to save move everything after finishing each image.')
+                        help='Path to the folder to save everything after finishing each image.')
     parser.add_argument('--auto', action='store_true', default=False,
                         help='Generate the JSONs with the landmarks without human corrections. (Default: False)')
     parser.add_argument('--pixel-size', '--pixel_size', type=float, default=1/12.36,

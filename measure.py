@@ -1,11 +1,11 @@
 """
-For eash measurment we have a pair of points.
+For each measurement we have a pair of points.
 
-There is a function for each hand pose (opened or closed) that returns a dict of measeure names
-to their corresponting pairs of points.
+There is a function for each hand pose (opened or closed) that returns a dict of measure names
+to their corresponding pairs of points.
 
-There's another function that takes the pairs of points and returns a dict of measeure names
-to their corresponting distances, scaled by pixel size.
+There's another function that takes the pairs of points and returns a dict of measure names
+to their corresponding distances, scaled by pixel size.
 
 Negative signs in point coordinates mean that the measurement is invalid.
 We still compute its value and return the distance as a negative number.
@@ -55,7 +55,7 @@ def mesure_opened(points: np.ndarray) -> dict[str, tuple]:
                                    mean_sign(points['O_f4MedialL'], points['O_f4MedialR'])),
         'handLittleLengthMid':    (mean_sign(points['O_f5DistalL'], points['O_f5DistalR']),
                                    mean_sign(points['O_f5MedialL'], points['O_f5MedialR'])),
-                }
+    }
 
     return distance
 
@@ -79,7 +79,7 @@ def mesure_closed(points: np.ndarray) -> dict[str, tuple]:
     # The most intuitive way of understanding how this works is by checking the landmarks of a hand
     # and seeing how the distances change when moving the points.
 
-    # handLengthCrotch parallel to middle finger, starting in C_f1Defect, up until C_f3Tip's hight.
+    # handLengthCrotch parallel to middle finger, starting in C_f1Defect, up until C_f3Tip's height.
     direction = abs(points['C_f3Tip']) - abs(points['C_f3BaseC'])
     direction /= np.linalg.norm(direction)
     handLengthCrotch = np.dot(abs(points['C_f3Tip']) - abs(points['C_f1Defect']), direction) * direction + abs(points['C_f1Defect'])
@@ -89,7 +89,7 @@ def mesure_closed(points: np.ndarray) -> dict[str, tuple]:
     if np.any(points['C_f3Tip'] < 0) or np.any(points['C_f3BaseC'] < 0) or np.any(points['C_f1Defect'] < 0):
         distance['handLengthCrotch'] = tuple(np.array(distance['handLengthCrotch']) * -1)
 
-    # handBreadthMeta perpendicular to the palm, starting in C_m1_3, up until C_m1_2 "hight".
+    # handBreadthMeta perpendicular to the palm, starting in C_m1_3, up until C_m1_2 "height".
     direction = abs(points['C_f3Tip']) - abs(points['C_wristBaseC'])
     direction /= np.linalg.norm(direction)
     direction[:] = -direction[1], direction[0]  # Rotate 90 degrees.

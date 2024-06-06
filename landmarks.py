@@ -116,7 +116,7 @@ def get_landmarks_closed(image, lmk_mp: np.ndarray):
     """
     The MediaPipe Hand landmarks are used as a starting point to compute ours.
     
-    We compute the tip just like in the opened hand: gettin away from MediaPipe's tip in the direction of the finger.
+    We compute the tip just like in the opened hand: getting away from MediaPipe's tip in the direction of the finger.
     
     The rest of our landmarks are computed as linear combinations of the MediaPipe landmarks.
     """

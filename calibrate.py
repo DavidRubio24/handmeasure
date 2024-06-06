@@ -4,7 +4,7 @@ It is used to calibrate the images from the camera.
 
 It is used to correct the perspective and eye fish distortions of the images.
 
-It uses a predifined intrinsic matrix and extrinsic parameters that
+It uses a predefined intrinsic matrix and extrinsic parameters that
 have been empirically obtained by calibrating the camera with OpenCV.
 It can load another calibration from a JSON.
 """
@@ -17,8 +17,8 @@ import numpy as np
 
 FOCAL_LENGTH = 370000     # Empirical: based on OpenCV calibration.
 SHAPE = (3120, 4208, 3)   # Max camera resolution
-INTRINSIC_MATRIX = np.array([[FOCAL_LENGTH, 0, SHAPE[1] // 2 - 800],
-                             [0, FOCAL_LENGTH, SHAPE[0] // 2 - 500],
+INTRINSIC_MATRIX = np.array([[FOCAL_LENGTH, 0, SHAPE[1] // 2 - 800],  # The optical center has empirically been found off-centered
+                             [0, FOCAL_LENGTH, SHAPE[0] // 2 - 500],  # by (500, 800) pixels from the image center.
                              [0,            0,             1]])
 
 EXTRINSIC_PARAMETERS = np.array([1, 0, 0, -.1])  # Eye fish and perspective distortion.
@@ -68,7 +68,7 @@ def calibrate_folder(path=r'\\10.10.204.24\scan4d\TENDER\HANDS\01_HANDS_SIN_CALI
     for file in progress_bar(files):
         undistorted = cv2.undistort(cv2.imread(os.path.join(path, file)), intrinsic_matrix, extrinsic_parameters)
         
-        # Save the undistorted image with a "lable" in the name.
+        # Save the undistorted image with a "label" in the name.
         idx = file.find('.')
         cv2.imwrite(os.path.join(dest, file[:idx] + '.undistorted' + file[idx:]), undistorted)
         

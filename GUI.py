@@ -1,8 +1,8 @@
 """
-This class has all the imformation and functions to create the GUI:
-- The original image and .
-- The point locations.
-- The modified image with the points and the measure linesd drawn.
+This class has all the information and functions to create the GUI:
+- The original image and point locations.
+- The modified point locations.
+- The modified image with the points and the measure lines drawn.
 - The zoom level, i.e. the region where to crop the image.
 - The window title.
 - The function to draw the points and the measure lines: show_image.
@@ -57,7 +57,7 @@ class CorrectorGUI:
 
     def show_image(self):
         """Draws the points and measures and shows the image."""
-        self.modified_image[:] = self.image  # Copy.
+        self.modified_image[:] = self.image  # Fast copy.
         radius = 10
         # Draw points
         for (x, y), color in zip(self.points, COLOR_SCHEME_POINTS):
@@ -74,7 +74,7 @@ class CorrectorGUI:
             elif x % 1:
                 circle_color = (255, 255, 255)
             else:
-                circle_color = (0, 0, 255)
+                circle_color = (0, 0, 255)  # Red, opencv uses BGR
             # Draw a cross at the point surrounded by a circle.
             x, y = round(x), round(y)
             self.modified_image[max(0, y - radius):y + radius + 1, x:x+1] = color
@@ -84,8 +84,8 @@ class CorrectorGUI:
         measures: dict[str, tuple] = {}
         """Dict of measure names to (start, end) points."""
         
-        # We check the number of points to know if the hand is closed or opened.
-        # This feels wrong. If something changes, it will break.
+        # TODO: We check the number of points to know if the hand is closed or opened.
+        #       This feels wrong. If something changes, it will break.
         if len(self.points) == 15:
             measures = mesure_closed(self.points)
         elif len(self.points) == 23:
@@ -122,7 +122,7 @@ class CorrectorGUI:
         # Only compute the edges the first time they are needed.
         if self.image_edges is None:
             # Blur the red channel (the most representative for the hand) and detect its edges.
-            # TODO: Those parameters have been chosen empiricaly for our scanner.
+            # TODO: Those parameters have been chosen empirically for our scanner.
             #       For other images they may not work as well.
             #       Delft probably needs a bigger blur (~20 instead of 11).
             image_blured = cv2.GaussianBlur(self.image[..., 2], (11, 11), 0)
@@ -189,7 +189,7 @@ class CorrectorGUI:
                 self.crop = tuple(map(round, crop))
             elif key_pressed == 16:  # Shift
                 self.shift = 2
-                # It will inmediately be reduced to 1.
+                # It will immediately be reduced to 1.
                 # Any additional key pressed will reduce it to 0.
                 # So only if Supr is pressed immediately after, it will have any effect.
             elif key_pressed == 46 and self.shift > 0:  # (Shift +) Supr
